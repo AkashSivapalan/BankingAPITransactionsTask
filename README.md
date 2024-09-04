@@ -2,21 +2,42 @@ To run this application, first you must clone this repo. You can either run this
 
 Steps to run on Docker:
 
-  Enter a terminal and navigate the the root of this project, bankingapi
-  Execute the following command to build the project: docker build -t spring-boot-docker .
-  Execute the following command to run project: docker run -p 8080:8080 spring-boot-docker
-  
-  The project will be available on localhost:8080
+Enter a terminal and navigate the the root of this project, bankingapi
+Build the JAR file with maven. You can do it with the command mvn clean install or if you have an IDE such as IntelliJ, select mvn install from the menu
+Execute the following command to build the project: docker build -t spring-boot-docker .
+Execute the following command to run project: docker run -p 8080:8080 spring-boot-docker
 
+The project will be available on localhost:8080
 
 Steps to execute on an IDE:
 
-  Open the project in your IDE and navigate to bankingapi\src\main\java\com\bankingapi\bankingapi
-  Open the file BankingapiApplication.java and run it. 
+Open the project in your IDE and navigate to bankingapi\src\main\java\com\bankingapi\bankingapi
+Open the file BankingapiApplication.java and run it.
 
-  The project will be available on localhost:8080
+The project will be available on localhost:8080
 
+API Routes and Payloads Examples:
 
+\*Replaces Values With Values You Want
 
-API Routes and Payloads:
+Creating a new account(POST):
+/register
+{
+"name":"Dave",
+"balance":12.50
+}
 
+Fund Transfer(POST)
+/transfer
+{
+"accountSender":"6d2268c3-aebc-45e2-86db-ebd54bb9883e",
+"accountReceiver":"8535fe8e-c57d-47eb-9cea-4b461654d7b6",
+"funds":"15.73"
+}
+
+User Transaction History(GET)
+/transactions/{accountId}
+
+Get User(GET)
+/user/{accountId}
+-> Although this get call wasn't included in the specifications, I added the call to check user balances after performing fund transfers. Decided to leave this call in the project for the person viewing this project

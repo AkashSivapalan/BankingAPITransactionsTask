@@ -2,8 +2,10 @@ package com.bankingapi.bankingapi.service;
 
 import com.bankingapi.bankingapi.model.Transaction;
 import com.bankingapi.bankingapi.model.TransactionDTO;
+import com.bankingapi.bankingapi.model.TransactionHistoryDTO;
 import com.bankingapi.bankingapi.model.User;
 import com.bankingapi.bankingapi.respository.InMemoryTransactionRepository;
+import com.bankingapi.bankingapi.respository.TransactionRepository;
 import com.bankingapi.bankingapi.respository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,11 +20,11 @@ import java.util.Optional;
 public class TransactionService {
 
     private final UserRepository userRepo;
-    private final InMemoryTransactionRepository transRepo;
+    private final TransactionRepository transRepo;
 
 
     @Autowired
-    public TransactionService(UserRepository userRepo, InMemoryTransactionRepository transRepo){
+    public TransactionService(UserRepository userRepo, TransactionRepository transRepo){
         this.userRepo=userRepo;
         this.transRepo=transRepo;
     }
@@ -44,14 +46,12 @@ public class TransactionService {
 
             List<Transaction> transactions = transRepo.findAll();
 
-            List<TransactionDTO> userTrans = new ArrayList<>();
+            List<TransactionHistoryDTO> userTrans = new ArrayList<>();
 
             for(Transaction trans:transactions){
                 if (trans.getAccountReceiver().equals(accountId) || trans.getAccountSender().equals(accountId)){
-                    TransactionDTO dto = new TransactionDTO();
-                    dto.setFunds(trans.getFunds());
-                    dto.setAccountSender(trans.getAccountSender());
-                    dto.setAccountReceiver(trans.getAccountReceiver());
+                    TransactionHistoryDTO dto = getTransactionHistoryDTO(accountId, trans);  //DTO for showing transaction history object without revealing the senders balance
+
                     userTrans.add(dto);
                 }
             }
@@ -66,5 +66,19 @@ public class TransactionService {
         }
 
 
+    }
+
+    private static TransactionHistoryDTO getTransactionHistoryDTO(String accountId, Transaction trans) {
+        TransactionHistoryDTO dto = new TransactionHistoryDTO();
+        dto.setFunds(trans.getFunds());
+        dto.setAccountSender(trans.getAccountSender());
+        dto.setAccountReceiver(trans.getAccountReceiver());
+        dto.setTimestamp(trans.getTimestamp());
+        if (trans.getAccountReceiver().equals(accountId)){
+            dto.setPostBalance(trans.getReceiverBalance());
+        }else{
+            dto.setPostBalance(trans.getSenderBalance());
+        }
+        return dto;
     }
 }

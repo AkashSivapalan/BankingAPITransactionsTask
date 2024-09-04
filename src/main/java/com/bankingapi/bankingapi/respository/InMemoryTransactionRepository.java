@@ -7,7 +7,7 @@ import java.util.*;
 
 
 @Repository
-public class InMemoryTransactionRepository {
+public class InMemoryTransactionRepository implements TransactionRepository{
 
     private final List<Transaction> transactionStore = new ArrayList<>();
 

@@ -5,6 +5,7 @@ import com.bankingapi.bankingapi.model.TransactionDTO;
 import com.bankingapi.bankingapi.model.User;
 import com.bankingapi.bankingapi.model.UserDTO;
 import com.bankingapi.bankingapi.respository.InMemoryTransactionRepository;
+import com.bankingapi.bankingapi.respository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,10 +23,10 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepo;
-    private final InMemoryTransactionRepository transRepo;
+    private final TransactionRepository transRepo;
 
     @Autowired
-    public UserService(UserRepository userRepo, InMemoryTransactionRepository transRepo){
+    public UserService(UserRepository userRepo, TransactionRepository transRepo){
         this.userRepo=userRepo;
         this.transRepo=transRepo;
     }
@@ -113,15 +114,17 @@ public class UserService {
                 return ResponseEntity.badRequest().body("Insufficient Funds");
             }
 
-            Transaction newTrans = new Transaction();
-            newTrans.setFunds(funds);
-            newTrans.setAccountReceiver(transDTO.getAccountReceiver());
-            newTrans.setAccountSender(transDTO.getAccountSender());
-
             double senderChange =sender.getBalance() - funds;
             sender.setBalance(senderChange);
             double receiverChange = receiver.getBalance()+funds;
             receiver.setBalance(receiverChange);
+
+            Transaction newTrans = new Transaction();
+            newTrans.setFunds(funds);
+            newTrans.setAccountReceiver(transDTO.getAccountReceiver());
+            newTrans.setAccountSender(transDTO.getAccountSender());
+            newTrans.setSenderBalance(senderChange);
+            newTrans.setReceiverBalance(receiverChange);
 
             userRepo.save(receiver);
             userRepo.save(sender);
