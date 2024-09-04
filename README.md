@@ -37,6 +37,7 @@ Fund Transfer(POST)
 
 User Transaction History(GET)
 /transactions/{accountId}
+->The postBalance is the user's balance after the fund transfer
 
 Get User(GET)
 /user/{accountId}
