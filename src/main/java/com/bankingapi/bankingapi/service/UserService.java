@@ -1,14 +1,19 @@
 package com.bankingapi.bankingapi.service;
 
 import com.bankingapi.bankingapi.model.Transaction;
+import com.bankingapi.bankingapi.model.TransactionDTO;
 import com.bankingapi.bankingapi.model.User;
 import com.bankingapi.bankingapi.model.UserDTO;
 import com.bankingapi.bankingapi.respository.InMemoryTransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import com.bankingapi.bankingapi.respository.UserRepository;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,17 +32,37 @@ public class UserService {
 
     public ResponseEntity<?> postUser(UserDTO userData) {
 
-        User newUser = new User();
+        try{
 
-        String generatedAccountId = generateUniqueAccountId();
+            if(userData.getBalance()<0){
+                return ResponseEntity.badRequest().body("Initial account balance cannot be negative.");
+            }
 
-        newUser.setBalance(userData.getBalance());
-        newUser.setName(userData.getName());
-        newUser.setAccountId(generatedAccountId);
+            BigDecimal balanceDec = new BigDecimal(userData.getBalance()).setScale(2, RoundingMode.HALF_UP);
+            double balance = balanceDec.doubleValue();
 
-        User savedUser = this.userRepo.save(newUser);
+            User newUser = new User();
 
-        return ResponseEntity.status(201).body(savedUser);
+            String generatedAccountId = generateUniqueAccountId();
+
+            newUser.setBalance(balance);
+            newUser.setName(userData.getName());
+            newUser.setAccountId(generatedAccountId);
+
+            User savedUser = this.userRepo.save(newUser);
+
+            UserDTO dto = new UserDTO();
+
+            dto.setName(savedUser.getName());
+            dto.setAccountId(savedUser.getAccountId());
+            dto.setBalance(savedUser.getBalance());
+
+            return ResponseEntity.status(201).body(dto);
+
+        }catch(Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while creating new account.");
+        }
+
     }
 
     public ResponseEntity<List<User>> getAllUsers() {
@@ -54,52 +79,66 @@ public class UserService {
         return accountId;
     }
 
-    public ResponseEntity<?>transferFunds(Transaction transDTO){
-        if (transDTO.getAccountReceiver().equals(transDTO.getAccountSender())){
-            return ResponseEntity.badRequest().body("Cannot transfer funds to the same account.");
+    public ResponseEntity<?>transferFunds(TransactionDTO transDTO){
+
+        if (transDTO.getAccountReceiver()==null || transDTO.getAccountReceiver().isEmpty() || transDTO.getAccountSender()==null || transDTO.getAccountSender().isEmpty()){
+            return ResponseEntity.badRequest().body("The account id fields cannot be empty");
         }
 
-        double funds = transDTO.getFunds();
+        try{
+            if (transDTO.getAccountReceiver().equals(transDTO.getAccountSender())){
+                return ResponseEntity.badRequest().body("Cannot transfer funds to the same account.");
+            }
 
-        if (funds<=0){
-            return ResponseEntity.badRequest().body("Funds must be a positive value.");
+            BigDecimal fundsDec = new BigDecimal(transDTO.getFunds()).setScale(2, RoundingMode.HALF_UP);
+            double funds =fundsDec.doubleValue();
+
+            if (funds<=0){
+                return ResponseEntity.badRequest().body("Funds must be a positive value.");
+            }
+
+            Optional<User> userReceiver = userRepo.findByAccountId(transDTO.getAccountReceiver());
+            Optional<User> userSender = userRepo.findByAccountId(transDTO.getAccountSender());
+
+            if(userReceiver.isEmpty() || userSender.isEmpty()){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("One of the accounts does not exist");
+            }
+
+            User receiver =userReceiver.get();
+            User sender = userSender.get();
+
+            if (sender.getBalance()<funds){
+                return ResponseEntity.badRequest().body("Insufficient Funds");
+            }
+
+            Transaction newTrans = new Transaction();
+            newTrans.setFunds(funds);
+            newTrans.setAccountReceiver(transDTO.getAccountReceiver());
+            newTrans.setAccountSender(transDTO.getAccountSender());
+            newTrans.setReceiverName(receiver.getName());
+            newTrans.setSenderName(sender.getName());
+
+            double senderChange =sender.getBalance() - funds;
+            sender.setBalance(senderChange);
+            double receiverChange = receiver.getBalance()+funds;
+            receiver.setBalance(receiverChange);
+
+            userRepo.save(receiver);
+            userRepo.save(sender);
+
+            transRepo.save(newTrans);
+
+            TransactionDTO dto = new TransactionDTO();
+            dto.setFunds(newTrans.getFunds());
+            dto.setAccountReceiver(newTrans.getAccountReceiver());
+            dto.setAccountSender(newTrans.getAccountSender());
+
+            return ResponseEntity.ok(dto);
+
+        }catch(Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while processing transaction.");
         }
 
-        Optional<User> userReceiver = userRepo.findByAccountId(transDTO.getAccountReceiver());
-        Optional<User> userSender = userRepo.findByAccountId(transDTO.getAccountSender());
-
-        if(userReceiver.isEmpty() || userSender.isEmpty()){
-            return ResponseEntity.badRequest().body("One of the accounts does not exist");
-        }
-
-        User receiver =userReceiver.get();
-        User sender = userSender.get();
-
-        Transaction newTrans = new Transaction();
-        newTrans.setFunds(transDTO.getFunds());
-        newTrans.setAccountReceiver(transDTO.getAccountReceiver());
-        newTrans.setAccountSender(transDTO.getAccountSender());
-        newTrans.setReceiverName(receiver.getName());
-        newTrans.setSenderName(sender.getName());
-
-
-
-        if (sender.getBalance()<funds){
-            return ResponseEntity.badRequest().body("Insufficient Funds");
-        }
-
-        double senderChange =sender.getBalance() - funds;
-        sender.setBalance(senderChange);
-        double receiverChange = receiver.getBalance()+funds;
-        receiver.setBalance(receiverChange);
-
-
-        userRepo.save(receiver);
-        userRepo.save(sender);
-
-        transRepo.save(newTrans);
-
-        return ResponseEntity.ok("Transfer Successful");
 
 
 

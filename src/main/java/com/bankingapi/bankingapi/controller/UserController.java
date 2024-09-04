@@ -2,6 +2,7 @@ package com.bankingapi.bankingapi.controller;
 
 
 import com.bankingapi.bankingapi.model.Transaction;
+import com.bankingapi.bankingapi.model.TransactionDTO;
 import com.bankingapi.bankingapi.model.User;
 import com.bankingapi.bankingapi.model.UserDTO;
 import com.bankingapi.bankingapi.service.UserService;
@@ -37,7 +38,7 @@ public class UserController {
     }
 
     @PostMapping("/transfer")
-    public ResponseEntity<?> transferFunds(@RequestBody Transaction newTrans) {
+    public ResponseEntity<?> transferFunds(@RequestBody TransactionDTO newTrans) {
         return userService.transferFunds(newTrans);
     }
 }
