@@ -8,10 +8,7 @@ import com.bankingapi.bankingapi.model.UserDTO;
 import com.bankingapi.bankingapi.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -32,9 +29,9 @@ public class UserController {
     }
 
 
-    @GetMapping("/users")
-    public ResponseEntity<List<User>> getAllUsers() {
-        return userService.getAllUsers();
+    @GetMapping("/user/{accountId}")
+    public ResponseEntity<?> getUser(@PathVariable String accountId) {
+        return userService.getUser(accountId);
     }
 
     @PostMapping("/transfer")

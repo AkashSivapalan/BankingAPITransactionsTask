@@ -51,7 +51,7 @@ public class TransactionService {
                     TransactionDTO dto = new TransactionDTO();
                     dto.setFunds(trans.getFunds());
                     dto.setAccountSender(trans.getAccountSender());
-                    dto.setAccountReceiver(trans.getAccountSender());
+                    dto.setAccountReceiver(trans.getAccountReceiver());
                     userTrans.add(dto);
                 }
             }

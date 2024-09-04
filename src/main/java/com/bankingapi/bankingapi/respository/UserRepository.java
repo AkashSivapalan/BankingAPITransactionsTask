@@ -10,5 +10,6 @@ public interface UserRepository {
     User save(User user);
     boolean existsByAccountId(String accountId);
 
+
     List<User> findAll();
 }

@@ -34,15 +34,19 @@ public class UserService {
 
         try{
 
+
             if(userData.getBalance()<0){
                 return ResponseEntity.badRequest().body("Initial account balance cannot be negative.");
             }
 
+            //Round balance to 2 decimals to represent the cents. If the decimal is more than 2 decimals, assumed I can round it.
             BigDecimal balanceDec = new BigDecimal(userData.getBalance()).setScale(2, RoundingMode.HALF_UP);
             double balance = balanceDec.doubleValue();
 
             User newUser = new User();
 
+            //Generate an accountId to identify accounts. Wasn't sure if requesting the user's email would be more appropriate to identify users similar to e-transfers.
+            // Decided on accountId since it was mentioned in the doc.
             String generatedAccountId = generateUniqueAccountId();
 
             newUser.setBalance(balance);
@@ -53,6 +57,7 @@ public class UserService {
 
             UserDTO dto = new UserDTO();
 
+            //Used dto object for user to demonstrate it. Since the user is simple, there isn't any difference between the two.
             dto.setName(savedUser.getName());
             dto.setAccountId(savedUser.getAccountId());
             dto.setBalance(savedUser.getBalance());
@@ -65,17 +70,13 @@ public class UserService {
 
     }
 
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userRepo.findAll();
-        return ResponseEntity.ok(users);
-    }
 
-
+    //Create a unique id and checks if it exists
     private String generateUniqueAccountId() {
         String accountId;
         do {
-            accountId = UUID.randomUUID().toString(); // Generate a random UUID
-        } while (userRepo.existsByAccountId(accountId)); // Check if the accountId already exists
+            accountId = UUID.randomUUID().toString();
+        } while (userRepo.existsByAccountId(accountId));
         return accountId;
     }
 
@@ -90,6 +91,7 @@ public class UserService {
                 return ResponseEntity.badRequest().body("Cannot transfer funds to the same account.");
             }
 
+            //Similar to balance, if funds has a long decimal, it is just rounded
             BigDecimal fundsDec = new BigDecimal(transDTO.getFunds()).setScale(2, RoundingMode.HALF_UP);
             double funds =fundsDec.doubleValue();
 
@@ -115,8 +117,6 @@ public class UserService {
             newTrans.setFunds(funds);
             newTrans.setAccountReceiver(transDTO.getAccountReceiver());
             newTrans.setAccountSender(transDTO.getAccountSender());
-            newTrans.setReceiverName(receiver.getName());
-            newTrans.setSenderName(sender.getName());
 
             double senderChange =sender.getBalance() - funds;
             sender.setBalance(senderChange);
@@ -128,6 +128,7 @@ public class UserService {
 
             transRepo.save(newTrans);
 
+            //Transaction DTO object. Return this instead of the actual transaction object
             TransactionDTO dto = new TransactionDTO();
             dto.setFunds(newTrans.getFunds());
             dto.setAccountReceiver(newTrans.getAccountReceiver());
@@ -140,8 +141,25 @@ public class UserService {
         }
 
 
-
-
     }
 
+    //Get call added outside of project parameters so i can check the user's balance after transactions.
+    public ResponseEntity<?> getUser(String accountId) {
+        try{
+            Optional<User> user = userRepo.findByAccountId(accountId);
+
+            if (user.isPresent()){
+                User foundUser = user.get();
+                UserDTO dto = new UserDTO();
+                dto.setBalance(foundUser.getBalance());
+                dto.setName(foundUser.getName());
+                dto.setAccountId(foundUser.getAccountId());
+                return ResponseEntity.ok(dto);
+            }
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while processing transaction.");
+        }
+
+        return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("Account Does Not Exist");
+    }
 }
