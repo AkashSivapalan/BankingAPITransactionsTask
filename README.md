@@ -1,6 +1,6 @@
 To run this application, first you must clone this repo. You can either run this through an IDE or with Docker.
 
-Steps to run on Docker:
+<h2>Steps to run on Docker:</h2>
 
 Enter a terminal and navigate the the root of this project, bankingapi
 Build the JAR file with maven. You can do it with the command mvn clean install or if you have an IDE such as IntelliJ, select mvn install from the menu
@@ -9,14 +9,14 @@ Execute the following command to run project: docker run -p 8080:8080 spring-boo
 
 The project will be available on localhost:8080
 
-Steps to execute on an IDE:
+<h2>Steps to execute on an IDE:</h2>
 
 Open the project in your IDE and navigate to bankingapi\src\main\java\com\bankingapi\bankingapi
 Open the file BankingapiApplication.java and run it.
 
 The project will be available on localhost:8080
 
-API Routes and Payloads Examples:
+<h2>API Routes and Payloads Examples:</h2>
 
 \*Replaces Values With Values You Want
 
