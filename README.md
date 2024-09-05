@@ -3,6 +3,7 @@ To run this application, first you must clone this repo. You can either run this
 <h2>Steps to run on Docker:</h2>
 
 Enter a terminal and navigate the the root of this project, bankingapi
+<br/>
 Build the JAR file with maven. You can do it with the command mvn clean install or if you have an IDE such as IntelliJ, select mvn install from the menu
 Execute the following command to build the project: docker build -t spring-boot-docker .
 Execute the following command to run project: docker run -p 8080:8080 spring-boot-docker
